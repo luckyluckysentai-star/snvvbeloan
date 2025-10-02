@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thông Điệp Tình Yêu</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #000000, #1a0033);
+      overflow: hidden;
+      min-height: 100vh;
+      font-family: 'Arial', sans-serif;
+    }
+
+    .hearts-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .heart {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: transparent;
+      opacity: 0;
+    }
+
+    .heart:before,
+    .heart:after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 16px;
+      background: #ff4081;
+      border-radius: 50px 50px 0 0;
+      transform: rotate(-45deg);
+      transform-origin: 0 100%;
+    }
+
+    .heart:after {
+      left: 10px;
+      transform: rotate(45deg);
+      transform-origin: 100% 100%;
+    }
+
+    .popup {
+      position: absolute;
+      padding: 12px 20px;
+      background: rgba(255, 255, 255, 0.9);
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-weight: bold;
+      font-size: 18px;
+      color: #d5006d;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(255, 105, 180, 0.5);
+      animation: floatUp 15s ease-in-out forwards;
+      z-index: 10;
+      max-width: 200px;
+      text-align: center;
+      border: 2px solid #ff80ab;
+    }
+
+    @keyframes floatUp {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      70% {
+        opacity: 0.8;
+        transform: translateY(-100px) scale(1.05);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-200px) scale(0.8);
+      }
+    }
+
+    .dialog {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(145deg, #ff80ab, #f8c7da);
+      padding: 30px;
+      border-radius: 20px;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-size: 28px;
+      color: white;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(255, 105, 180, 0.6);
+      z-index: 1000;
+      max-width: 80%;
+      box-sizing: border-box;
+      border: 3px solid white;
+      animation: pulse 2s infinite;
+    }
+
+    .dialog p {
+      margin-bottom: 20px;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .start-button {
+      background: white;
+      color: #ff4081;
+      border: none;
+      padding: 12px 30px;
+      font-size: 18px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .start-button:hover {
+      background: #ffebee;
+      transform: scale(1.05);
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(255, 105, 180, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 15px rgba(255, 105, 180, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(255, 105, 180, 0);
+      }
+    }
+
+    /* Media Queries cho màn hình nhỏ */
+    @media screen and (max-width: 600px) {
+      .popup {
+        padding: 8px 12px;
+        font-size: 14px;
+        max-width: 150px;
+      }
+
+      .dialog {
+        padding: 20px;
+        font-size: 20px;
+        max-width: 90%;
+      }
+
+      .start-button {
+        padding: 10px 25px;
+        font-size: 16px;
+      }
+    }
+
+    @media screen and (max-width: 400px) {
+      .popup {
+        padding: 6px 10px;
+        font-size: 12px;
+        max-width: 120px;
+      }
+
+      .dialog {
+        padding: 15px;
+        font-size: 18px;
+      }
+    }
+
+    /* Hiệu ứng fullscreen */
+    body:-webkit-full-screen {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #000000, #33001a);
+    }
+
+    body:fullscreen {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #000000, #33001a);
+    }
+  </style>
+</head>
+<body>
+  <div class="hearts-container" id="heartsContainer"></div>
+  
+  <div id="startDialog" class="dialog">
+    <p>Nhấn vào nút bên dưới để bắt đầu trải nghiệm tình yêu!</p>
+    <button class="start-button" id="startButton">Bắt đầu ngay ❤️</button>
+  </div>
+
+  <audio id="backgroundMusic" loop>
+    <!-- Thay thế bằng đường dẫn file nhạc của bạn -->
+    <source src="assets/music.mp3" type="audio/mpeg">
+    Trình duyệt của bạn không hỗ trợ phát nhạc.
+  </audio>
+
+  <script>
+    const messages = [
+      "Anh nhớ em!", "Em là tất cả!", "Mãi yêu em!", 
+      "Tình yêu của anh!", "Em thật đặc biệt!", "Trái tim anh thuộc về em!",
+      "Cảm ơn vì đã ở bên anh!", "Mỗi ngày bên em là một ngày hạnh phúc!",
+      "Em là điều tuyệt vời nhất!", "Anh yêu em hơn mọi thứ!"
+    ];
+    
+    const colors = ["#e91e63", "#ff4081", "#d5006d", "#c2185b", "#ad1457"];
+    
+    const dialog = document.getElementById("startDialog");
+    const startButton = document.getElementById("startButton");
+    const audio = document.getElementById("backgroundMusic");
+    const heartsContainer = document.getElementById("heartsContainer");
+
+    // Tạo trái tim bay
+    function createFloatingHearts() {
+      for (let i = 0; i < 15; i++) {
+        setTimeout(() => {
+          const heart = document.createElement('div');
+          heart.classList.add('heart');
+          
+          const size = Math.random() * 20 + 10;
+          heart.style.width = `${size}px`;
+          heart.style.height = `${size}px`;
+          
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          heart.style.color = color;
+          
+          const startX = Math.random() * window.innerWidth;
+          heart.style.left = `${startX}px`;
+          heart.style.top = `${window.innerHeight + 20}px`;
+          
+          heartsContainer.appendChild(heart);
+          
+          // Hiệu ứng bay lên
+          const animation = heart.animate([
+            { transform: `translateY(0) rotate(0deg)`, opacity: 1 },
+            { transform: `translateY(-${window.innerHeight + 100}px) rotate(${360 + Math.random() * 180}deg)`, opacity: 0 }
+          ], {
+            duration: 3000 + Math.random() * 4000,
+            easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+          });
+          
+          animation.onfinish = () => {
+            heart.remove();
+          };
+        }, i * 300);
+      }
+    }
+
+    function createPopup() {
+      const popup = document.createElement("div");
+      popup.className = "popup";
+      popup.textContent = messages[Math.floor(Math.random() * messages.length)];
+      
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      popup.style.color = color;
+      popup.style.borderColor = color;
+      popup.style.boxShadow = `0 4px 15px ${color}80`;
+
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+
+      // Điều chỉnh giới hạn vị trí để pop-up không tràn ra ngoài
+      const maxWidth = screenWidth - 200;
+      const maxHeight = screenHeight - 100;
+      const x = Math.floor(Math.random() * (maxWidth < 0 ? 0 : maxWidth));
+      const y = Math.floor(Math.random() * (maxHeight < 0 ? 0 : maxHeight));
+
+      popup.style.left = `${x}px`;
+      popup.style.top = `${y}px`;
+
+      document.body.appendChild(popup);
+
+      // Tự động xóa popup sau khi animation kết thúc
+      setTimeout(() => {
+        if (popup.parentNode) {
+          popup.remove();
+        }
+      }, 16000);
+    }
+
+    function startPopups(count) {
+      let created = 0;
+      const interval = setInterval(() => {
+        if (created >= count) {
+          clearInterval(interval);
+          return;
+        }
+        createPopup();
+        created++;
+      }, 100);
+    }
+
+    function enterFullscreen() {
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen().catch(err => {
+          console.error(`Lỗi khi bật chế độ toàn màn hình: ${err.message}`);
+        });
+      } else if (elem.mozRequestFullScreen) {
+        elem.mozRequestFullScreen();
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+      } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+      }
+    }
+
+    function startExperience() {
+      dialog.style.display = "none";
+      
+      // Thử phát nhạc
+      audio.play().then(() => {
+        console.log("Nhạc đang phát!");
+      }).catch(error => {
+        console.log("Không thể phát nhạc:", error);
+        // Có thể thêm thông báo cho người dùng ở đây
+      });
+      
+      enterFullscreen();
+      startPopups(150);
+      
+      // Tạo trái tim bay liên tục
+      setInterval(createFloatingHearts, 3000);
+    }
+
+    // Sự kiện khi nhấn nút bắt đầu
+    startButton.addEventListener("click", startExperience);
+    
+    // Cũng cho phép nhấn vào màn hình để bắt đầu
+    document.addEventListener("click", function(event) {
+      if (event.target !== startButton) {
+        startExperience();
+      }
+    });
+
+    // Tạo một vài trái tim bay ngay từ đầu
+    createFloatingHearts();
+  </script>
+</body>
+</html>
